@@ -1,102 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Globale variabler og tilstand ---
-    let gameState = {
-        p1: { id: 1, score: 0, type: 'ai', strategyKey: 'titForTat', choice: null, intendedChoice: null, errored: false },
-        p2: { id: 2, score: 0, type: 'ai', strategyKey: 'alwaysDefect', choice: null, intendedChoice: null, errored: false },
-        history: [], // { round: #, p1Choice: 'C'/'D', p1Intended: 'C'/'D', p1Errored: bool, p2Choice: 'C'/'D', p2Intended: 'C'/'D', p2Errored: bool, p1Score: #, p2Score: # }
-        currentRound: 0,
-        totalRounds: 200,
-        noiseLevel: 0, // Prosent
-        payoffs: {
-            'C': { 'C': { p1: 3, p2: 3 }, 'D': { p1: 0, p2: 5 } },
-            'D': { 'C': { p1: 5, p2: 0 }, 'D': { p1: 1, p2: 1 } }
-        },
-        gameInterval: null,
-        playSpeed: 200,
-        humanPlayer1ChoiceMade: false,
-        humanPlayer2ChoiceMade: false,
-        isGameOver: true,
-        isAutoPlaying: false,
-        isTournamentRunning: false
-    };
+    // === Globale Variabler og Tilstand ===
+    let gameState = createInitialGameState(); // Bruker funksjon for enkel nullstilling
+    let allStrategies = createInitialStrategies(); // Samme her
 
-    // --- AI Strategier ---
-    // Nøkkel: unik id, Verdi: { name: Visningsnavn, isCustom: bool, isRuleBased: bool, fn: funksjon, rules: (for regelbasert), state: (for stateful), reset: (for stateful) }
-    let allStrategies = {
-        alwaysCooperate: { name: "Alltid Samarbeid", isCustom: false, isRuleBased: false, fn: (myH, oppH) => 'C' },
-        alwaysDefect: { name: "Alltid Svik", isCustom: false, isRuleBased: false, fn: (myH, oppH) => 'D' },
-        randomChoice: { name: "Tilfeldig", isCustom: false, isRuleBased: false, fn: (myH, oppH) => Math.random() < 0.5 ? 'C' : 'D' },
-        titForTat: {
-            name: "Tit For Tat (TFT)", isCustom: false, isRuleBased: false,
-            fn: (myH, oppH) => oppH.length === 0 ? 'C' : oppH[oppH.length - 1].choice
-        },
-        grimTrigger: {
-            name: "Grim Trigger", isCustom: false, isRuleBased: false, state: { triggered: false },
-            fn: function(myH, oppH) {
-                if (this.state.triggered) return 'D';
-                if (oppH.length > 0 && oppH[oppH.length - 1].choice === 'D') {
-                    this.state.triggered = true;
-                    return 'D';
-                }
-                return 'C';
-            },
-            reset: function() { this.state.triggered = false; }
-        },
-        joss: {
-            name: "Joss (Sleip TFT)", isCustom: false, isRuleBased: false,
-            fn: (myH, oppH) => {
-                if (oppH.length === 0) return 'C';
-                const opponentLastMove = oppH[oppH.length - 1].choice;
-                // Kopier motstanderens trekk, MEN ha 10% sjanse for å svike hvis motstanderen samarbeidet
-                return (opponentLastMove === 'C' && Math.random() < 0.1) ? 'D' : opponentLastMove;
-            }
-        },
-        titForTwoTats: {
-            name: "Tit For Two Tats (TFT2T)", isCustom: false, isRuleBased: false,
-            fn: (myH, oppH) => {
-                if (oppH.length < 2) return 'C';
-                return (oppH[oppH.length - 1].choice === 'D' && oppH[oppH.length - 2].choice === 'D') ? 'D' : 'C';
-            }
-        },
-       generousTitForTat: {
-            name: "Generous Tit For Tat (GTFT ~10%)", isCustom: false, isRuleBased: false,
-            fn: (myH, oppH) => {
-                if (oppH.length === 0) return 'C';
-                const opponentLastMove = oppH[oppH.length - 1].choice;
-                // Lik TFT, men 10% sjanse for å tilgi (samarbeide) selv etter svik
-                return (opponentLastMove === 'D' && Math.random() < 0.1) ? 'C' : opponentLastMove;
-            }
-        },
-        tester: {
-            name: "Tester", isCustom: false, isRuleBased: false, state: { opponentRetaliated: false, tested: false },
-            fn: function(myH, oppH) {
-                if (myH.length === 0) { // Første trekk
-                    this.state.tested = true;
-                    return 'D';
-                }
-                if (myH.length === 1 && this.state.tested) { // Andre trekk, sjekk respons
-                    if (oppH[0].choice === 'D') {
-                        this.state.opponentRetaliated = true;
-                    }
-                    // Samarbeid i andre runde uansett (unnskyldning)
-                    return 'C';
-                }
-                 // Etter testfasen
-                 if (this.state.opponentRetaliated) {
-                     // Oppfør deg som TFT hvis de straffet
-                     return oppH.length > 0 ? oppH[oppH.length - 1].choice : 'C';
-                 } else {
-                     // Utnytt hvis de ikke straffet (Always Defect etter test)
-                     return 'D';
-                 }
-             },
-             reset: function() { this.state.opponentRetaliated = false; this.state.tested = false; }
-        }
-    };
-
-    // --- DOM Element Referanser ---
-    const $ = (selector) => document.querySelector(selector);
-    const $$ = (selector) => document.querySelectorAll(selector);
+    // --- DOM Element Referanser (hentet en gang) ---
+    const configColumn = $('.config-column'); // Referanse til hele kolonnen
     // Konfig
     const p1TypeSelect = $('#p1-type');
     const p2TypeSelect = $('#p2-type');
@@ -147,7 +55,110 @@ document.addEventListener('DOMContentLoaded', () => {
     const tournamentResultsContainer = $('.tournament-results');
     const tournamentResultsTableBody = $('#tournament-results-table tbody');
 
-    // --- Hjelpefunksjoner ---
+    // === Initialiseringsfunksjoner ===
+    function createInitialGameState() {
+        return {
+            p1: { id: 1, score: 0, type: 'ai', strategyKey: 'titForTat', choice: null, intendedChoice: null, errored: false },
+            p2: { id: 2, score: 0, type: 'ai', strategyKey: 'alwaysDefect', choice: null, intendedChoice: null, errored: false },
+            history: [],
+            currentRound: 0,
+            totalRounds: 200,
+            noiseLevel: 0,
+            payoffs: {
+                'C': { 'C': { p1: 3, p2: 3 }, 'D': { p1: 0, p2: 5 } },
+                'D': { 'C': { p1: 5, p2: 0 }, 'D': { p1: 1, p2: 1 } }
+            },
+            gameInterval: null,
+            playSpeed: 200,
+            humanPlayer1ChoiceMade: false,
+            humanPlayer2ChoiceMade: false,
+            isGameOver: true, // Start som "ikke i gang"
+            isAutoPlaying: false,
+            isTournamentRunning: false
+        };
+    }
+
+    function createInitialStrategies() {
+         // Sørg for at reset-funksjoner er bundet til riktig 'this' hvis de bruker 'this.state'
+        let baseStrategies = {
+            alwaysCooperate: { name: "Alltid Samarbeid", isCustom: false, isRuleBased: false, fn: (myH, oppH) => 'C' },
+            alwaysDefect: { name: "Alltid Svik", isCustom: false, isRuleBased: false, fn: (myH, oppH) => 'D' },
+            randomChoice: { name: "Tilfeldig", isCustom: false, isRuleBased: false, fn: (myH, oppH) => Math.random() < 0.5 ? 'C' : 'D' },
+            titForTat: {
+                name: "Tit For Tat (TFT)", isCustom: false, isRuleBased: false,
+                fn: (myH, oppH) => oppH.length === 0 ? 'C' : oppH[oppH.length - 1].choice
+            },
+            grimTrigger: {
+                name: "Grim Trigger", isCustom: false, isRuleBased: false, state: { triggered: false },
+                fn: function(myH, oppH) {
+                    if (this.state.triggered) return 'D';
+                    if (oppH.length > 0 && oppH[oppH.length - 1].choice === 'D') {
+                        this.state.triggered = true;
+                        return 'D';
+                    }
+                    return 'C';
+                },
+                reset: function() { this.state.triggered = false; }
+            },
+            joss: {
+               name: "Joss (Sleip TFT)", isCustom: false, isRuleBased: false,
+                fn: (myH, oppH) => {
+                    if (oppH.length === 0) return 'C';
+                    const opponentLastMove = oppH[oppH.length - 1].choice;
+                    return (opponentLastMove === 'C' && Math.random() < 0.1) ? 'D' : opponentLastMove;
+                }
+            },
+            titForTwoTats: {
+                name: "Tit For Two Tats (TFT2T)", isCustom: false, isRuleBased: false,
+                fn: (myH, oppH) => {
+                    if (oppH.length < 2) return 'C';
+                    return (oppH[oppH.length - 1].choice === 'D' && oppH[oppH.length - 2].choice === 'D') ? 'D' : 'C';
+                }
+            },
+           generousTitForTat: {
+               name: "Generous Tit For Tat (GTFT ~10%)", isCustom: false, isRuleBased: false,
+               fn: (myH, oppH) => {
+                   if (oppH.length === 0) return 'C';
+                   const opponentLastMove = oppH[oppH.length - 1].choice;
+                   return (opponentLastMove === 'D' && Math.random() < 0.1) ? 'C' : opponentLastMove;
+               }
+           },
+             tester: {
+                name: "Tester", isCustom: false, isRuleBased: false, state: { opponentRetaliated: false, tested: false },
+                fn: function(myH, oppH) {
+                    if (myH.length === 0) { // Første trekk
+                        this.state.tested = true;
+                        return 'D'; // Start with defection to test
+                    }
+                     // Sjekk motstanderens svar på vårt første trekk (D)
+                    if (myH.length === 1 && this.state.tested) {
+                        if (oppH[0].choice === 'D') { // De straffet
+                            this.state.opponentRetaliated = true;
+                        }
+                         // Samarbeid i andre runde uansett for å signalisere (eller "unnskylde")
+                        return 'C';
+                    }
+                     // Langsiktig strategi basert på testen
+                     if (this.state.opponentRetaliated) {
+                         // Hvis de straffet, spill TFT fra nå av
+                         return oppH.length > 0 ? oppH[oppH.length - 1].choice : 'C';
+                     } else {
+                         // Hvis de *ikke* straffet (var snille mot vår D), utnytt dem!
+                         return 'D';
+                     }
+                 },
+                 reset: function() { this.state.opponentRetaliated = false; this.state.tested = false; }
+            }
+        };
+         // Bind 'this' for stateful methods if needed (although .call should handle it)
+         if (baseStrategies.grimTrigger) baseStrategies.grimTrigger.reset = baseStrategies.grimTrigger.reset.bind(baseStrategies.grimTrigger);
+         if (baseStrategies.tester) baseStrategies.tester.reset = baseStrategies.tester.reset.bind(baseStrategies.tester);
+
+         return baseStrategies;
+    }
+
+
+    // === Hjelpefunksjoner ===
 
     function getSelectedRadioValue(radioGroupName) {
         const selected = document.querySelector(`input[name="${radioGroupName}"]:checked`);
@@ -155,43 +166,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createRuleBasedAgentFn(rules) {
-        // Returnerer en *ny* funksjon basert på de gitte reglene
         return function(myHistory, oppHistory) {
-            if (oppHistory.length === 0) {
-                return rules.firstMove; // Bruk den lagrede regelen for første trekk
-            }
+            if (oppHistory.length === 0) return rules.firstMove;
             const opponentLastChoice = oppHistory[oppHistory.length - 1].choice;
-            if (opponentLastChoice === 'C') {
-                return rules.afterOpponentC; // Bruk lagret regel
-            } else { // Opponent defected
-                return rules.afterOpponentD; // Bruk lagret regel
-            }
+            return opponentLastChoice === 'C' ? rules.afterOpponentC : rules.afterOpponentD;
         };
     }
 
-    function populateStrategyDropdowns() {
-        const selects = [p1StrategySelect, p2StrategySelect];
-         // Sorter etter navn før populering
+    function populateSelect(selectElement, defaultValueKey) {
+        const currentValue = selectElement.value; // Husk valgt verdi hvis den finnes
+        selectElement.innerHTML = '';
         const sortedKeys = Object.keys(allStrategies).sort((a, b) => allStrategies[a].name.localeCompare(allStrategies[b].name));
-
-        selects.forEach(select => {
-            const currentValue = select.value;
-            select.innerHTML = '';
-             sortedKeys.forEach(key => {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = allStrategies[key].name + (allStrategies[key].isCustom ? ' (Egen)' : '');
-                select.appendChild(option);
-            });
-            if (allStrategies[currentValue]) {
-                select.value = currentValue;
-            } else {
-                 // Prøv å sette standardvalg hvis mulig
-                if (select.id === 'p1-strategy' && allStrategies['titForTat']) select.value = 'titForTat';
-                 else if (select.id === 'p2-strategy' && allStrategies['alwaysDefect']) select.value = 'alwaysDefect';
-                 else if (select.options.length > 0) select.selectedIndex = 0; // Fallback til første
-            }
+        sortedKeys.forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = allStrategies[key].name + (allStrategies[key].isCustom ? ' (Egen)' : '');
+            selectElement.appendChild(option);
         });
+        // Sett tilbake valgt verdi eller default
+        if (allStrategies[currentValue]) {
+            selectElement.value = currentValue;
+        } else if (allStrategies[defaultValueKey]) {
+             selectElement.value = defaultValueKey;
+        } else if (selectElement.options.length > 0) {
+             selectElement.selectedIndex = 0;
+        }
+    }
+
+    function populateStrategyDropdowns() {
+        populateSelect(p1StrategySelect, 'titForTat');
+        populateSelect(p2StrategySelect, 'alwaysDefect');
     }
 
      function populateTournamentAgentList() {
@@ -203,7 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
              checkbox.type = 'checkbox';
              checkbox.id = `ts-${key}`;
              checkbox.value = key;
-             checkbox.checked = !allStrategies[key].isCustom; // Velg alle predefinerte som standard
+              // Velg alle predefinerte + evt. egne som allerede er valgt
+             checkbox.checked = !allStrategies[key].isCustom || checkbox.checked;
              const label = document.createElement('label');
              label.htmlFor = `ts-${key}`;
              label.textContent = allStrategies[key].name + (allStrategies[key].isCustom ? ' (Egen)' : '');
@@ -213,26 +218,45 @@ document.addEventListener('DOMContentLoaded', () => {
          });
      }
 
+    // === UI Oppdateringsfunksjon ===
      function updateUI() {
+        // Sjekk om spillet KAN startes (dvs. ikke allerede i gang, og ikke i turnering)
+        const canStartNewGame = gameState.isGameOver && !gameState.isTournamentRunning;
+
+        // Vis/skjul seksjoner
+        configColumn.style.display = canStartNewGame ? 'flex' : 'none'; // Vis config kun når man kan starte nytt
+        gameSection.classList.toggle('hidden', gameState.isGameOver || gameState.isTournamentRunning);
+        tournamentResultsContainer.classList.toggle('hidden', gameState.isTournamentRunning || tournamentResultsTableBody.innerHTML === '');
+        tournamentStatusDiv.classList.toggle('hidden', !gameState.isTournamentRunning);
+        gameOverMessage.classList.toggle('hidden', !gameState.isGameOver || gameState.currentRound === 0 || gameState.isTournamentRunning);
+
+        // Hvis spillet ikke er i gang, trenger vi ikke oppdatere resten
+        if (gameState.isGameOver || gameState.isTournamentRunning) {
+             // Sørg for at spillkontroller er deaktivert når spillet ikke kjører
+             playStepBtn.disabled = true;
+             play10Btn.disabled = true;
+             play100Btn.disabled = true;
+             playAllBtn.disabled = true;
+             return;
+        }
+
+         // --- Oppdater spill-spesifikk UI ---
          const isP1Human = gameState.p1.type === 'human';
          const isP2Human = gameState.p2.type === 'human';
 
-         // Skjul/vis AI-spesifikke ting
+         // AI vs Menneske-spesifikke elementer
          p1AiOptions.style.display = isP1Human ? 'none' : 'flex';
          p2AiOptions.style.display = isP2Human ? 'none' : 'flex';
-         p1HumanControls.classList.toggle('hidden', !isP1Human || gameState.isGameOver);
-         p2HumanControls.classList.toggle('hidden', !isP2Human || gameState.isGameOver);
-
-         // Oppdater panel-IDer og strateginavn
-         p1IdSpan.textContent = isP1Human ? 'Menneske' : 'AI';
-         p2IdSpan.textContent = isP2Human ? 'Menneske' : 'AI';
+         p1HumanControls.classList.toggle('hidden', !isP1Human);
+         p2HumanControls.classList.toggle('hidden', !isP2Human);
          p1StrategyNameP.textContent = !isP1Human && gameState.p1.strategyKey ? allStrategies[gameState.p1.strategyKey].name : '';
          p2StrategyNameP.textContent = !isP2Human && gameState.p2.strategyKey ? allStrategies[gameState.p2.strategyKey].name : '';
          p1StrategyNameP.classList.toggle('hidden', isP1Human);
          p2StrategyNameP.classList.toggle('hidden', isP2Human);
+         p1IdSpan.textContent = isP1Human ? 'Menneske' : 'AI';
+         p2IdSpan.textContent = isP2Human ? 'Menneske' : 'AI';
 
-
-         // Oppdater spillstatus og poeng
+         // Status og poeng
          roundCounterSpan.textContent = gameState.currentRound;
          totalRoundsDisplaySpan.textContent = gameState.totalRounds;
          noiseDisplaySpan.textContent = gameState.noiseLevel;
@@ -241,45 +265,36 @@ document.addEventListener('DOMContentLoaded', () => {
          p1AvgScoreSpan.textContent = (gameState.currentRound > 0 ? (gameState.p1.score / gameState.currentRound) : 0).toFixed(2);
          p2AvgScoreSpan.textContent = (gameState.currentRound > 0 ? (gameState.p2.score / gameState.currentRound) : 0).toFixed(2);
 
-         // Nullstill visning av siste valg hvis spillet ikke er i gang eller nettopp nullstilt
-         if (gameState.currentRound === 0 || gameState.history.length < gameState.currentRound) {
-             p1ChosenSpan.textContent = '?'; p1ChosenSpan.className = 'chosen';
-             p2ChosenSpan.textContent = '?'; p2ChosenSpan.className = 'chosen';
-         } else if (gameState.history.length > 0){ // Vis siste valg
+         // Siste valg
+         if (gameState.history.length > 0) {
              const lastRound = gameState.history[gameState.history.length - 1];
              p1ChosenSpan.textContent = lastRound.p1Choice;
              p1ChosenSpan.className = `chosen ${lastRound.p1Choice === 'C' ? 'cooperate' : 'defect'} ${lastRound.p1Errored ? 'error' : ''}`;
-             if(lastRound.p1Errored) p1ChosenSpan.title = `Intensjon var ${lastRound.p1Intended}`; else p1ChosenSpan.title = '';
-
+             p1ChosenSpan.title = lastRound.p1Errored ? `Intensjon var ${lastRound.p1Intended}` : '';
              p2ChosenSpan.textContent = lastRound.p2Choice;
              p2ChosenSpan.className = `chosen ${lastRound.p2Choice === 'C' ? 'cooperate' : 'defect'} ${lastRound.p2Errored ? 'error' : ''}`;
-              if(lastRound.p2Errored) p2ChosenSpan.title = `Intensjon var ${lastRound.p2Intended}`; else p2ChosenSpan.title = '';
+             p2ChosenSpan.title = lastRound.p2Errored ? `Intensjon var ${lastRound.p2Intended}` : '';
+         } else {
+             p1ChosenSpan.textContent = '?'; p1ChosenSpan.className = 'chosen'; p1ChosenSpan.title = '';
+             p2ChosenSpan.textContent = '?'; p2ChosenSpan.className = 'chosen'; p2ChosenSpan.title = '';
          }
 
          // Aktiver/deaktiver spillkontrollknapper
-         const canPlayStep = !gameState.isGameOver &&
-                             (isP1Human ? gameState.humanPlayer1ChoiceMade : true) &&
-                             (isP2Human ? gameState.humanPlayer2ChoiceMade : true);
-         playStepBtn.disabled = !canPlayStep || gameState.isAutoPlaying || gameState.isTournamentRunning;
-         play10Btn.disabled = isP1Human || isP2Human || gameState.isGameOver || gameState.isAutoPlaying || gameState.isTournamentRunning;
-         play100Btn.disabled = isP1Human || isP2Human || gameState.isGameOver || gameState.isAutoPlaying || gameState.isTournamentRunning;
-         playAllBtn.disabled = isP1Human || isP2Human || gameState.isGameOver || gameState.isTournamentRunning;
+         const p1Ready = !isP1Human || gameState.humanPlayer1ChoiceMade;
+         const p2Ready = !isP2Human || gameState.humanPlayer2ChoiceMade;
+         playStepBtn.disabled = !p1Ready || !p2Ready || gameState.isAutoPlaying;
+         const canAutoPlay = !isP1Human && !isP2Human;
+         play10Btn.disabled = !canAutoPlay || gameState.isAutoPlaying;
+         play100Btn.disabled = !canAutoPlay || gameState.isAutoPlaying;
+         playAllBtn.disabled = !canAutoPlay;
          playAllBtn.textContent = gameState.isAutoPlaying ? "Stopp" : "Kjør Resten";
 
-
-         // Vis/skjul spillseksjon og game over-melding
-         gameSection.classList.toggle('hidden', gameState.isGameOver && !gameState.isTournamentRunning); // Vis under turnering også? Nei.
-         gameOverMessage.classList.toggle('hidden', !gameState.isGameOver || gameState.currentRound === 0 || gameState.isTournamentRunning);
-
-          // Vis/Skjul turneringsresultater/status
-         tournamentStatusDiv.classList.toggle('hidden', !gameState.isTournamentRunning);
-         tournamentResultsContainer.classList.toggle('hidden', gameState.isTournamentRunning || tournamentResultsTableBody.innerHTML === ''); // Skjul hvis tom
-
-         // Nullstill valgt-klasse på menneskeknapper hvis deres valg er null
-         if (!gameState.humanPlayer1ChoiceMade) p1ChoiceBtns.forEach(b => b.classList.remove('selected'));
-         if (!gameState.humanPlayer2ChoiceMade) p2ChoiceBtns.forEach(b => b.classList.remove('selected'));
+         // Nullstill valgt-klasse hvis menneskelig valg trengs
+         if (isP1Human && !gameState.humanPlayer1ChoiceMade) p1ChoiceBtns.forEach(b => b.classList.remove('selected'));
+         if (isP2Human && !gameState.humanPlayer2ChoiceMade) p2ChoiceBtns.forEach(b => b.classList.remove('selected'));
      }
 
+     // === Historikk & Resultatvisning ===
      function updateHistoryList() {
          historyList.innerHTML = ''; // Tøm og bygg opp de siste N
          const displayCount = 15;
@@ -287,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
          for (let i = startIndex; i < gameState.history.length; i++) {
              const roundData = gameState.history[i];
              const li = document.createElement('li');
-
              const p1ChoiceClass = roundData.p1Choice === 'C' ? 'history-choice-C' : 'history-choice-D';
              const p2ChoiceClass = roundData.p2Choice === 'C' ? 'history-choice-C' : 'history-choice-D';
              const p1Err = roundData.p1Errored ? `<span class="history-error-indicator">(var ${roundData.p1Intended})</span>` : '';
@@ -295,69 +309,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
              li.innerHTML = `
                  <span class="history-round">R${roundData.round}:</span>
-                 <span class="history-p1">P1: <span class="${p1ChoiceClass}">${roundData.p1Choice}</span>${p1Err} (+${roundData.p1Score})</span>
-                 <span class="history-p2">P2: <span class="${p2ChoiceClass}">${roundData.p2Choice}</span>${p2Err} (+${roundData.p2Score})</span>
+                 <span class="history-p1">P1: <span class="${p1ChoiceClass}">${roundData.p1Choice}</span>${p1Err} <span class="history-score">(+${roundData.p1Score})</span></span>
+                 <span class="history-p2">P2: <span class="${p2ChoiceClass}">${roundData.p2Choice}</span>${p2Err} <span class="history-score">(+${roundData.p2Score})</span></span>
              `;
              historyList.appendChild(li);
          }
-         historyList.scrollTop = historyList.scrollHeight; // Scroll til bunnen
+         historyList.scrollTop = historyList.scrollHeight;
      }
 
-     function getAgentChoice(agentState, opponentState, history) {
-         if (agentState.type === 'human') {
-             return agentState.choice; // Må være satt fra knappetrykk
-         }
-         const strategy = allStrategies[agentState.strategyKey];
-         if (!strategy || !strategy.fn) {
-             console.error("Ugyldig eller manglende strategi:", agentState.strategyKey);
-             return 'C'; // Sikker fallback
-         }
-         try {
-             // Lag historikk spesifikt for denne agenten
-             const myHistory = history.map(h => agentState.id === 1 ?
-                 { choice: h.p1Choice, intended: h.p1Intended, errored: h.p1Errored } :
-                 { choice: h.p2Choice, intended: h.p2Intended, errored: h.p2Errored }
-             );
-             const oppHistory = history.map(h => agentState.id === 1 ?
-                 { choice: h.p2Choice, intended: h.p2Intended, errored: h.p2Errored } :
-                 { choice: h.p1Choice, intended: h.p1Intended, errored: h.p1Errored }
-             );
+      function displayTournamentResults(scores, numAgents, roundsPerGame) {
+          const results = [];
+          for (const key in scores) {
+             // Gjennomsnitt = Total poengsum / (Antall motstandere (inkl seg selv) * Antall runder per spill)
+             const averageScore = scores[key] / (numAgents * roundsPerGame);
+             results.push({ key: key, name: allStrategies[key]?.name ?? `Ukjent (${key})`, average: averageScore });
+          }
 
-             // Kjør funksjonen, bruk .call for stateful strategier hvis 'state' finnes
-             let choice;
-              if (strategy.state) {
-                  choice = strategy.fn.call(strategy, myHistory, oppHistory);
-              } else {
-                  choice = strategy.fn(myHistory, oppHistory);
-              }
+          results.sort((a, b) => b.average - a.average);
 
-             // Valider output
-             if (choice !== 'C' && choice !== 'D') {
-                 console.warn(`Strategi ${agentState.strategyKey} returnerte ugyldig verdi: ${choice}. Bruker 'C'.`);
-                 return 'C';
-             }
-             return choice;
-         } catch (e) {
-             console.error(`Feil under kjøring av strategi ${agentState.strategyKey}:`, e);
-             return 'C'; // Sikker fallback
-         }
-     }
+          tournamentResultsTableBody.innerHTML = '';
+          results.forEach((result, index) => {
+              const row = tournamentResultsTableBody.insertRow();
+              row.innerHTML = `
+                  <td>${index + 1}</td>
+                  <td>${result.name}${allStrategies[result.key]?.isCustom ? ' (Egen)' : ''}</td>
+                  <td>${result.average.toFixed(2)}</td>
+              `;
+          });
+           tournamentResultsContainer.classList.remove('hidden');
+      }
 
-     function applyNoise(intendedChoice, noisePercent) {
-         const didError = Math.random() * 100 < noisePercent;
-         const actualChoice = didError ? (intendedChoice === 'C' ? 'D' : 'C') : intendedChoice;
-         return { choice: actualChoice, errored: didError, intended: intendedChoice };
-     }
+
+    // === Spilllogikk ===
+    function getAgentChoice(agentState, opponentState, history) {
+        if (agentState.type === 'human') {
+            return agentState.choice; // Må være satt
+        }
+        const strategy = allStrategies[agentState.strategyKey];
+        if (!strategy?.fn) return 'C'; // Fallback
+
+        try {
+            const myHistory = history.map(h => agentState.id === 1 ?
+                { choice: h.p1Choice, intended: h.p1Intended, errored: h.p1Errored } :
+                { choice: h.p2Choice, intended: h.p2Intended, errored: h.p2Errored }
+            );
+            const oppHistory = history.map(h => agentState.id === 1 ?
+                { choice: h.p2Choice, intended: h.p2Intended, errored: h.p2Errored } :
+                { choice: h.p1Choice, intended: h.p1Intended, errored: h.p1Errored }
+            );
+
+            let choice;
+            if (strategy.state && typeof strategy.fn === 'function') {
+                choice = strategy.fn.call(strategy, myHistory, oppHistory);
+            } else if (typeof strategy.fn === 'function'){
+                choice = strategy.fn(myHistory, oppHistory);
+            } else {
+                 choice = 'C'; // Fallback hvis fn ikke er en funksjon
+            }
+
+            return (choice === 'C' || choice === 'D') ? choice : 'C'; // Valider
+        } catch (e) {
+            console.error(`Feil i strategi ${agentState.strategyKey}:`, e);
+            return 'C'; // Fallback
+        }
+    }
+
+    function applyNoise(intendedChoice, noisePercent) {
+        const didError = Math.random() * 100 < noisePercent;
+        const actualChoice = didError ? (intendedChoice === 'C' ? 'D' : 'C') : intendedChoice;
+        return { choice: actualChoice, errored: didError, intended: intendedChoice };
+    }
 
     function playSingleStep() {
-        if (gameState.isGameOver || gameState.isTournamentRunning) return;
+        if (gameState.isGameOver || gameState.isTournamentRunning || gameState.isAutoPlaying) return; // Ikke kjør manuelt steg under auto/turnering
 
          const p1Intended = getAgentChoice(gameState.p1, gameState.p2, gameState.history);
          const p2Intended = getAgentChoice(gameState.p2, gameState.p1, gameState.history);
 
+        // Sjekk om menneskelige spillere er klare
          if ((gameState.p1.type === 'human' && !p1Intended) || (gameState.p2.type === 'human' && !p2Intended)) {
-             console.warn("Mangler menneskelig valg for å spille runde.");
-             return; // Ikke spill runden
+             console.warn("Venter på menneskelig(e) valg.");
+             // Kanskje gi en visuell indikasjon til brukeren?
+             return;
          }
 
          const p1Result = applyNoise(p1Intended, gameState.noiseLevel);
@@ -375,115 +408,103 @@ document.addEventListener('DOMContentLoaded', () => {
              p1Score: payoff.p1, p2Score: payoff.p2
          });
 
-         // Nullstill menneskelige valg for neste runde
-         gameState.p1.choice = null;
-         gameState.p2.choice = null;
-         gameState.humanPlayer1ChoiceMade = false;
-         gameState.humanPlayer2ChoiceMade = false;
+         // Nullstill for neste runde
+         gameState.p1.choice = null; gameState.humanPlayer1ChoiceMade = false;
+         gameState.p2.choice = null; gameState.humanPlayer2ChoiceMade = false;
+
 
          if (gameState.currentRound >= gameState.totalRounds) {
              gameState.isGameOver = true;
-             gameState.isAutoPlaying = false; // Stopp auto-spill
-             if(gameState.gameInterval) clearInterval(gameState.gameInterval);
-             gameState.gameInterval = null;
          }
 
          updateUI();
-         updateHistoryList(); // Oppdater loggen
+         updateHistoryList();
      }
 
-     function playMultipleSteps(steps) {
-         if (gameState.p1.type === 'human' || gameState.p2.type === 'human') {
-             alert("Kan ikke spille flere trekk automatisk med menneskelige spillere.");
-             return;
-         }
+    function playMultipleSteps(steps) {
+         if (gameState.p1.type === 'human' || gameState.p2.type === 'human' || gameState.isTournamentRunning || gameState.isAutoPlaying) return;
          const targetRound = Math.min(gameState.totalRounds, gameState.currentRound + steps);
          while (gameState.currentRound < targetRound && !gameState.isGameOver) {
-             playSingleStep();
+              // Trenger ikke sjekke human input her siden vi allerede har sjekket at begge er AI
+              const p1Intended = getAgentChoice(gameState.p1, gameState.p2, gameState.history);
+              const p2Intended = getAgentChoice(gameState.p2, gameState.p1, gameState.history);
+              const p1Result = applyNoise(p1Intended, gameState.noiseLevel);
+              const p2Result = applyNoise(p2Intended, gameState.noiseLevel);
+              const payoff = gameState.payoffs[p1Result.choice][p2Result.choice];
+              gameState.p1.score += payoff.p1;
+              gameState.p2.score += payoff.p2;
+              gameState.currentRound++;
+              gameState.history.push({
+                  round: gameState.currentRound,
+                  p1Choice: p1Result.choice, p1Intended: p1Result.intended, p1Errored: p1Result.errored,
+                  p2Choice: p2Result.choice, p2Intended: p2Result.intended, p2Errored: p2Result.errored,
+                  p1Score: payoff.p1, p2Score: payoff.p2
+              });
+              if (gameState.currentRound >= gameState.totalRounds) gameState.isGameOver = true;
          }
-         updateUI(); // Sørg for at UI er oppdatert etterpå
+         updateUI();
          updateHistoryList();
      }
 
      function togglePlayAll() {
-          if (gameState.p1.type === 'human' || gameState.p2.type === 'human') {
-              alert("Kan ikke kjøre automatisk med menneskelige spillere.");
-              return;
-          }
+          if (gameState.p1.type === 'human' || gameState.p2.type === 'human' || gameState.isTournamentRunning) return;
 
          if (gameState.isAutoPlaying) {
-             // Stopp
              clearInterval(gameState.gameInterval);
              gameState.gameInterval = null;
              gameState.isAutoPlaying = false;
          } else {
-             // Start
              gameState.isAutoPlaying = true;
              gameState.gameInterval = setInterval(() => {
                  if (!gameState.isGameOver) {
-                     playSingleStep();
+                     playMultipleSteps(1); // Bruk multi-step for å unngå UI-oppdatering per steg
                  } else {
                      clearInterval(gameState.gameInterval);
                      gameState.gameInterval = null;
                      gameState.isAutoPlaying = false;
-                     updateUI(); // Oppdater knapper
+                     updateUI(); // Sluttoppdatering
                  }
              }, gameState.playSpeed);
          }
-         updateUI(); // Oppdater knappetekst etc.
+         updateUI(); // Oppdater knappetekst etc. umiddelbart
      }
 
-     function resetGame() {
-         if (gameState.gameInterval) clearInterval(gameState.gameInterval);
-         gameState.gameInterval = null;
-         gameState.isAutoPlaying = false;
-         gameState.isTournamentRunning = false; // Viktig
+    function resetGame() {
+        if (gameState.gameInterval) clearInterval(gameState.gameInterval);
+         if (gameState.isTournamentRunning) return; // Ikke nullstill under turnering
 
-         // Les innstillinger
-         gameState.p1.type = p1TypeSelect.value;
-         gameState.p2.type = p2TypeSelect.value;
-         gameState.p1.strategyKey = p1StrategySelect.value;
-         gameState.p2.strategyKey = p2StrategySelect.value;
-         gameState.totalRounds = parseInt(roundsInput.value) || 200;
-         gameState.noiseLevel = parseInt(noiseInput.value) || 0;
-         gameState.playSpeed = parseInt(playSpeedSlider.value) || 200;
+        gameState = createInitialGameState(); // Hent en frisk tilstand
 
-         // Nullstill tilstand
-         gameState.p1.score = 0;
-         gameState.p2.score = 0;
-         gameState.p1.choice = null;
-         gameState.p2.choice = null;
-         gameState.history = [];
-         gameState.currentRound = 0;
-         gameState.isGameOver = false;
-         gameState.humanPlayer1ChoiceMade = false;
-         gameState.humanPlayer2ChoiceMade = false;
+        // Les verdier fra UI inn i den nye tilstanden
+        gameState.p1.type = p1TypeSelect.value;
+        gameState.p2.type = p2TypeSelect.value;
+        gameState.p1.strategyKey = p1StrategySelect.value;
+        gameState.p2.strategyKey = p2StrategySelect.value;
+        gameState.totalRounds = parseInt(roundsInput.value) || 200;
+        gameState.noiseLevel = parseInt(noiseInput.value) || 0;
+        gameState.playSpeed = parseInt(playSpeedSlider.value) || 200;
+        speedValueSpan.textContent = gameState.playSpeed; // Oppdater speed display
 
-         // Nullstill stateful strategier
-         Object.values(allStrategies).forEach(strat => {
-             if (strat.reset) strat.reset();
-         });
+        // Nullstill strategitilstand
+        Object.values(allStrategies).forEach(strat => {
+            if (strat.reset) strat.reset();
+        });
 
-         historyList.innerHTML = ''; // Tøm historikkvisning
-         gameOverMessage.classList.add('hidden');
-         tournamentResultsContainer.classList.add('hidden'); // Skjul turneringsres.
-         tournamentStatusDiv.classList.add('hidden');
+        gameState.isGameOver = false; // Gjør klar til å spille
+        historyList.innerHTML = ''; // Tøm historikkvisning
+        tournamentResultsTableBody.innerHTML = ''; // Tøm turneringsresultater
 
-         updateUI(); // Oppdater hele UIet
-     }
+        updateUI(); // Oppdater hele UI
+    }
 
     function addRuleBasedAgent() {
         const name = customAgentNameInput.value.trim();
-        const key = name.toLowerCase().replace(/[^a-z0-9]/g, ''); // Enkel nøkkelgenerering
+        const key = name.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now(); // Legg til timestamp for unikhet
 
-        if (!name || !key) {
-            alert("Vennligst gi agenten et navn.");
-            return;
-        }
-         if (allStrategies[key]) {
-            alert(`En agent med navnet "${name}" (eller lignende nøkkel '${key}') finnes allerede.`);
-            return;
-        }
+        if (!name) { alert("Vennligst gi agenten et navn."); return; }
+        if (allStrategies[key] || Object.values(allStrategies).some(s => s.name === name)) {
+             alert(`En agent med navnet "${name}" finnes allerede.`); return;
+         }
 
         const rules = {
             firstMove: getSelectedRadioValue('rule-first'),
@@ -492,57 +513,51 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (!rules.firstMove || !rules.afterOpponentC || !rules.afterOpponentD) {
-            alert("Vennligst velg regler for alle situasjoner.");
-            return;
+            alert("Velg regler for alle situasjoner."); return;
         }
 
-         // Lag funksjonen basert på reglene
         const agentFn = createRuleBasedAgentFn(rules);
 
-         allStrategies[key] = {
-             name: name,
-             isCustom: true,
-             isRuleBased: true,
-             fn: agentFn,
-             rules: rules // Lagre reglene for evt. visning/redigering senere
-         };
+         allStrategies[key] = { name, isCustom: true, isRuleBased: true, fn: agentFn, rules };
 
-        console.log(`Regelbasert agent "${name}" lagt til med nøkkel "${key}".`);
         populateStrategyDropdowns();
         populateTournamentAgentList();
-        customAgentNameInput.value = ''; // Nullstill input
+        customAgentNameInput.value = ''; // Nullstill
         alert(`Agenten "${name}" ble lagt til!`);
     }
 
-    // --- Turneringslogikk (tilpasset fra forrige) ---
+    // === Turneringslogikk ===
      async function runTournament() {
-         if (gameState.isTournamentRunning) return;
-
-         const selectedAgentKeys = [];
-         $$('#tournament-agent-list input[type="checkbox"]:checked').forEach(cb => {
-             selectedAgentKeys.push(cb.value);
-         });
-
-         if (selectedAgentKeys.length < 2) {
-             alert("Velg minst to agenter for turneringen.");
-             return;
+         if (gameState.isTournamentRunning || !gameState.isGameOver) {
+              alert("Fullfør eller nullstill pågående spill/turnering først.");
+              return;
          }
 
+         const selectedAgentKeys = Array.from($$('#tournament-agent-list input:checked')).map(cb => cb.value);
+
+         if (selectedAgentKeys.length < 2) {
+             alert("Velg minst to agenter."); return;
+         }
+
+         // Les globale innstillinger FØR turneringen starter
+         const roundsPerGame = parseInt(roundsInput.value) || 200;
+         const noisePercent = parseInt(noiseInput.value) || 0;
+
          gameState.isTournamentRunning = true;
+         gameState.isGameOver = false; // Turnering pågår
          startTournamentBtn.disabled = true;
          startTournamentBtn.textContent = "Kjører...";
          tournamentResultsContainer.classList.add('hidden');
          tournamentStatusDiv.classList.remove('hidden');
-         updateUI(); // Deaktiver spillkontroller etc.
+         updateUI(); // Oppdater diverse UI-elementer
 
-         const roundsPerGame = parseInt(roundsInput.value) || 200;
-         const noisePercent = parseInt(noiseInput.value) || 0;
-         const tournamentScores = {}; // { strategyKey: totalScore }
+         const tournamentScores = {};
          selectedAgentKeys.forEach(key => { tournamentScores[key] = 0; });
 
          const totalGamesToPlay = selectedAgentKeys.length * selectedAgentKeys.length;
          let gamesPlayed = 0;
 
+         // Kjør alle spillpar
          for (let i = 0; i < selectedAgentKeys.length; i++) {
              for (let j = 0; j < selectedAgentKeys.length; j++) {
                  gamesPlayed++;
@@ -550,30 +565,32 @@ document.addEventListener('DOMContentLoaded', () => {
                  const key2 = selectedAgentKeys[j];
                  tournamentStatusDiv.textContent = `Spill ${gamesPlayed}/${totalGamesToPlay}: ${allStrategies[key1].name} vs ${allStrategies[key2].name}`;
 
-                 // Nullstill stateful strategier før *hvert* spill
+                 // Nullstill stateful strategier
                  if (allStrategies[key1]?.reset) allStrategies[key1].reset();
                  if (allStrategies[key2]?.reset) allStrategies[key2].reset();
 
-
-                 let currentGameScoreP1 = 0;
-                 let currentGameScoreP2 = 0;
-                 let currentHistory = [];
+                 let p1ScoreThisGame = 0;
+                 let p2ScoreThisGame = 0;
+                 let historyThisGame = [];
 
                  for (let r = 0; r < roundsPerGame; r++) {
-                     const agent1State = { id: 1, type: 'ai', strategyKey: key1 }; // Midlertidig
-                     const agent2State = { id: 2, type: 'ai', strategyKey: key2 }; // Midlertidig
+                      const agent1State = { id: 1, type: 'ai', strategyKey: key1 };
+                      const agent2State = { id: 2, type: 'ai', strategyKey: key2 };
 
-                      const intendedP1 = getAgentChoice(agent1State, agent2State, currentHistory);
-                      const intendedP2 = getAgentChoice(agent2State, agent1State, currentHistory);
+                      const intendedP1 = getAgentChoice(agent1State, agent2State, historyThisGame);
+                      const intendedP2 = getAgentChoice(agent2State, agent1State, historyThisGame);
 
                       const resultP1 = applyNoise(intendedP1, noisePercent);
                       const resultP2 = applyNoise(intendedP2, noisePercent);
 
                       const payoff = gameState.payoffs[resultP1.choice][resultP2.choice];
-                      currentGameScoreP1 += payoff.p1;
-                      currentGameScoreP2 += payoff.p2;
+                      p1ScoreThisGame += payoff.p1;
+                       // Poengsum for P2 legges kun til hvis det ikke er spill mot seg selv
+                      if (i !== j) {
+                           p2ScoreThisGame += payoff.p2;
+                      }
 
-                      currentHistory.push({
+                      historyThisGame.push({
                           round: r + 1,
                           p1Choice: resultP1.choice, p1Intended: resultP1.intended, p1Errored: resultP1.errored,
                           p2Choice: resultP2.choice, p2Intended: resultP2.intended, p2Errored: resultP2.errored,
@@ -581,65 +598,43 @@ document.addEventListener('DOMContentLoaded', () => {
                       });
                  }
 
-                 tournamentScores[key1] += currentGameScoreP1;
-                  // Når en agent spiller mot seg selv, legges poengene til én gang.
-                  // Når de spiller mot andre, legges begge poengsummene til den respektive agenten.
+                 tournamentScores[key1] += p1ScoreThisGame;
                  if (i !== j) {
-                    tournamentScores[key2] += currentGameScoreP2;
+                     tournamentScores[key2] += p2ScoreThisGame;
+                 } else {
+                      // Når agent spiller mot seg selv, legges poengsummen til én gang
+                      // for å beregne gjennomsnitt korrekt over alle spill.
+                      // (Alternativt kunne man delt selv-spill-poeng på 2, men
+                      // å dele totalen på (antall agenter * runder) gir samme snitt)
                  }
 
-                 // Liten pause for å la UI oppdatere progress-teksten
-                 await new Promise(resolve => setTimeout(resolve, 0));
+
+                 await new Promise(resolve => setTimeout(resolve, 0)); // UI-oppdateringspause
              }
          }
 
          displayTournamentResults(tournamentScores, selectedAgentKeys.length, roundsPerGame);
 
          gameState.isTournamentRunning = false;
-         gameState.isGameOver = true; // Sett spillstatus til over
+         gameState.isGameOver = true;
          startTournamentBtn.disabled = false;
          startTournamentBtn.textContent = "Kjør Turnering";
          tournamentStatusDiv.classList.add('hidden');
-         tournamentResultsContainer.classList.remove('hidden');
-         updateUI();
+         updateUI(); // Viser resultater og konfig igjen
      }
-
-      function displayTournamentResults(scores, numStrategies, roundsPerGame) {
-          const results = [];
-          for (const key in scores) {
-                // Korrekt gjennomsnitt: total poengsum / (antall spill * runder per spill)
-                // Antall spill er numStrategies (siden den spiller mot alle, inkludert seg selv)
-               const averageScore = scores[key] / (numStrategies * roundsPerGame);
-               results.push({ key: key, name: allStrategies[key].name, average: averageScore });
-           }
-
-          results.sort((a, b) => b.average - a.average); // Sorter synkende
-
-          tournamentResultsTableBody.innerHTML = '';
-          results.forEach((result, index) => {
-              const row = tournamentResultsTableBody.insertRow();
-              row.innerHTML = `
-                  <td>${index + 1}</td>
-                  <td>${result.name}${allStrategies[result.key].isCustom ? ' (Egen)' : ''}</td>
-                  <td>${result.average.toFixed(2)}</td>
-              `;
-          });
-           tournamentResultsContainer.classList.remove('hidden'); // Sørg for at den vises
-      }
 
     // --- Event Listeners ---
     resetGameBtn.addEventListener('click', resetGame);
 
-    p1TypeSelect.addEventListener('change', () => { gameState.p1.type = p1TypeSelect.value; resetGame(); });
-    p2TypeSelect.addEventListener('change', () => { gameState.p2.type = p2TypeSelect.value; resetGame(); });
-    p1StrategySelect.addEventListener('change', () => { gameState.p1.strategyKey = p1StrategySelect.value; resetGame();});
-    p2StrategySelect.addEventListener('change', () => { gameState.p2.strategyKey = p2StrategySelect.value; resetGame();});
+    p1TypeSelect.addEventListener('change', resetGame); // Enklest å nullstille ved typeendring
+    p2TypeSelect.addEventListener('change', resetGame);
+    p1StrategySelect.addEventListener('change', () => { gameState.p1.strategyKey = p1StrategySelect.value; updateUI(); }); // Bare oppdater state, ikke nullstill
+    p2StrategySelect.addEventListener('change', () => { gameState.p2.strategyKey = p2StrategySelect.value; updateUI(); });
     roundsInput.addEventListener('change', () => { gameState.totalRounds = parseInt(roundsInput.value) || 200; updateUI(); });
-     noiseInput.addEventListener('change', () => { gameState.noiseLevel = parseInt(noiseInput.value) || 0; updateUI(); });
-
+    noiseInput.addEventListener('change', () => { gameState.noiseLevel = parseInt(noiseInput.value) || 0; updateUI(); });
 
     p1ChoiceBtns.forEach(button => button.addEventListener('click', (e) => {
-        if (!gameState.isGameOver && gameState.p1.type === 'human') {
+        if (!gameState.isGameOver && gameState.p1.type === 'human' && !gameState.humanPlayer1ChoiceMade) {
             gameState.p1.choice = e.target.dataset.choice;
             gameState.humanPlayer1ChoiceMade = true;
             p1ChoiceBtns.forEach(b => b.classList.remove('selected'));
@@ -647,8 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
         }
     }));
-     p2ChoiceBtns.forEach(button => button.addEventListener('click', (e) => {
-        if (!gameState.isGameOver && gameState.p2.type === 'human') {
+    p2ChoiceBtns.forEach(button => button.addEventListener('click', (e) => {
+        if (!gameState.isGameOver && gameState.p2.type === 'human' && !gameState.humanPlayer2ChoiceMade) {
             gameState.p2.choice = e.target.dataset.choice;
             gameState.humanPlayer2ChoiceMade = true;
             p2ChoiceBtns.forEach(b => b.classList.remove('selected'));
@@ -662,28 +657,21 @@ document.addEventListener('DOMContentLoaded', () => {
     play100Btn.addEventListener('click', () => playMultipleSteps(100));
     playAllBtn.addEventListener('click', togglePlayAll);
     playSpeedSlider.addEventListener('input', (e) => {
-        const newSpeed = parseInt(e.target.value);
-        gameState.playSpeed = newSpeed;
-        speedValueSpan.textContent = newSpeed;
-        if (gameState.isAutoPlaying) { // Oppdater intervallet hvis det kjører
+        gameState.playSpeed = parseInt(e.target.value);
+        speedValueSpan.textContent = gameState.playSpeed;
+        if (gameState.isAutoPlaying) { // Juster farten hvis den kjører
             clearInterval(gameState.gameInterval);
-            togglePlayAll(); // Start det på nytt med ny hastighet
-            togglePlayAll(); // Stopp det igjen for å oppdatere knappetekst
+            togglePlayAll(); // Starter den på nytt med ny fart (og oppdaterer knapp)
         }
     });
 
     addRuleAgentBtn.addEventListener('click', addRuleBasedAgent);
     startTournamentBtn.addEventListener('click', runTournament);
 
-    // Koble begge "Nye Innstillinger"-knappene til resetGame
-    $('#show-settings-btn-game')?.addEventListener('click', resetGame);
-    $('#show-settings-btn-tournament')?.addEventListener('click', resetGame);
 
-
-    // --- Initialisering ---
+    // --- Initialisering ved Lasting ---
     populateStrategyDropdowns();
     populateTournamentAgentList();
-    resetGame(); // Setter opp standardverdier og initielt UI
-    updateUI();
+    updateUI(); // Vis den initielle (konfigurasjons-) tilstanden
 
 });
