@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dilemma Lab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Dilemma Lab: Utforsk Prisoner's Dilemma</h1>
+
+    <div class="settings-container">
+        <h2>Innstillinger</h2>
+        <div class="setting">
+            <label for="player1-type">Spiller 1:</label>
+            <select id="player1-type">
+                <option value="human">Menneske</option>
+                <!-- AI-alternativer legges til av JS -->
+            </select>
+        </div>
+        <div class="setting">
+            <label for="player2-type">Spiller 2:</label>
+            <select id="player2-type">
+                <option value="ai">AI</option>
+                <option value="human">Menneske</option>
+                <!-- AI-alternativer legges til av JS -->
+            </select>
+        </div>
+         <div class="setting ai-setting player1"> <!-- Skjules om Spiller 1 er menneske -->
+            <label for="player1-strategy">Strategi (Spiller 1):</label>
+            <select id="player1-strategy">
+                <!-- Fylles av JS -->
+            </select>
+        </div>
+        <div class="setting ai-setting player2"> <!-- Skjules om Spiller 2 er menneske -->
+            <label for="player2-strategy">Strategi (Spiller 2):</label>
+            <select id="player2-strategy">
+                 <!-- Fylles av JS -->
+            </select>
+        </div>
+        <div class="setting">
+            <label for="num-rounds">Antall Runder:</label>
+            <input type="number" id="num-rounds" value="10" min="1" max="500">
+        </div>
+         <div class="setting">
+            <label for="noise-level">Støy (% sjanse for feil):</label>
+            <input type="number" id="noise-level" value="0" min="0" max="50">
+        </div>
+        <button id="start-game-btn">Start Nytt Spill</button>
+    </div>
+
+    <div class="game-container hidden">
+        <div class="payoff-matrix">
+            <h3>Poengmatrise</h3>
+            <table>
+                <tr><th></th><th>Spiller 2 Samarbeider (C)</th><th>Spiller 2 Sviker (D)</th></tr>
+                <tr><th>Spiller 1 Samarbeider (C)</th><td>P1: 3, P2: 3</td><td>P1: 0, P2: 5</td></tr>
+                <tr><th>Spiller 1 Sviker (D)</th><td>P1: 5, P2: 0</td><td>P1: 1, P2: 1</td></tr>
+            </table>
+        </div>
+
+        <div class="status-area">
+            Runde: <span id="current-round">0</span> / <span id="total-rounds">10</span>
+        </div>
+
+        <div class="players-area">
+            <div class="player-panel" id="player1-panel">
+                <h2>Spiller 1 (<span class="player-type">Menneske</span>)</h2>
+                 <p class="strategy-display hidden"></p>
+                <div class="controls human-controls">
+                    <button class="choice-btn cooperate" data-player="1" data-choice="C">Samarbeid (C)</button>
+                    <button class="choice-btn defect" data-player="1" data-choice="D">Svik (D)</button>
+                </div>
+                 <div class="result-area">
+                    Valg: <span class="choice-display">?</span><br>
+                    Poeng denne runden: <span class="round-score">0</span><br>
+                    Total poengsum: <span class="total-score">0</span>
+                </div>
+            </div>
+
+            <div class="player-panel" id="player2-panel">
+                <h2>Spiller 2 (<span class="player-type">AI</span>)</h2>
+                <p class="strategy-display"></p> <!-- Vises alltid for AI -->
+                <div class="controls human-controls hidden"> <!-- Skjules om Spiller 2 er AI -->
+                    <button class="choice-btn cooperate" data-player="2" data-choice="C">Samarbeid (C)</button>
+                    <button class="choice-btn defect" data-player="2" data-choice="D">Svik (D)</button>
+                </div>
+                 <div class="result-area">
+                    Valg: <span class="choice-display">?</span><br>
+                    Poeng denne runden: <span class="round-score">0</span><br>
+                    Total poengsum: <span class="total-score">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button id="play-round-btn" disabled>Spill Runde</button>
+            <button id="play-all-rounds-btn">Spill Alle Gjenstående</button>
+            <label for="play-speed">Hastighet:</label>
+            <input type="range" id="play-speed" min="50" max="1000" value="500" step="50">
+            (<span id="speed-value">500</span> ms per runde)
+        </div>
+
+        <div class="history-container">
+            <h2>Historikk</h2>
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>Runde</th>
+                        <th>Spiller 1 Valg</th>
+                        <th>Spiller 1 Feil?</th>
+                        <th>Spiller 2 Valg</th>
+                        <th>Spiller 2 Feil?</th>
+                        <th>Spiller 1 Poeng</th>
+                        <th>Spiller 2 Poeng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Historikk fylles av JS -->
+                </tbody>
+            </table>
+        </div>
+
+         <div class="results-summary hidden">
+             <h2>Spillresultat</h2>
+             <p id="final-outcome"></p>
+             <button id="show-settings-btn">Nye Innstillinger</button>
+         </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
