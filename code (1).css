@@ -1,0 +1,217 @@
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1, h2, h3 {
+    color: #0056b3;
+    text-align: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.settings-container, .game-container {
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-container {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.setting {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Added gap for better spacing */
+}
+
+.setting label {
+    min-width: 150px; /* Ensure labels align */
+    text-align: right;
+    font-weight: bold;
+}
+
+.setting select, .setting input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex-grow: 1; /* Allow input/select to take available space */
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 5px; /* Added margin for spacing */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.payoff-matrix {
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    padding: 10px;
+    background-color: #e9f5ff;
+    border-radius: 5px;
+}
+
+.payoff-matrix table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.payoff-matrix th, .payoff-matrix td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.payoff-matrix th {
+    background-color: #d0eaff;
+}
+
+.status-area {
+    text-align: center;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.players-area {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    gap: 20px; /* Add gap between player panels */
+}
+
+.player-panel {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+    width: 45%; /* Adjust width for better layout */
+    background-color: #f9f9f9;
+    text-align: center; /* Center content */
+}
+
+.player-panel h2 {
+    margin-top: 0;
+    font-size: 1.3em;
+    color: #555;
+}
+
+.player-panel .controls {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.player-panel .strategy-display {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+
+.choice-btn {
+    font-size: 1.1em;
+    width: 120px; /* Fixed width for buttons */
+}
+
+.choice-btn.cooperate { background-color: #28a745; }
+.choice-btn.cooperate:hover { background-color: #218838; }
+.choice-btn.defect { background-color: #dc3545; }
+.choice-btn.defect:hover { background-color: #c82333; }
+
+.choice-display { font-weight: bold; font-size: 1.2em; }
+.choice-display.cooperate { color: #28a745; }
+.choice-display.defect { color: #dc3545; }
+.choice-display.error { color: orange; font-style: italic; }
+
+.round-score, .total-score {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.result-area {
+    margin-top: 10px;
+    line-height: 1.4;
+}
+
+.game-controls {
+    text-align: center;
+    margin-bottom: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.game-controls label {
+    margin-left: 15px;
+}
+
+.history-container {
+    margin-top: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#history-table th, #history-table td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    text-align: center;
+}
+
+#history-table th {
+    background-color: #e9ecef;
+    position: sticky;
+    top: 0;
+    z-index: 1; /* Ensure header stays above scrolling content */
+}
+
+#history-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.history-cooperate { color: green; font-weight: bold; }
+.history-defect { color: red; font-weight: bold; }
+.history-error { font-style: italic; color: orange; }
+
+.results-summary {
+    margin-top: 25px;
+    padding: 20px;
+    border: 2px solid #007bff;
+    background-color: #e7f3ff;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.results-summary h2 {
+     margin-top: 0;
+}
