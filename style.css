@@ -1,217 +1,350 @@
+/* Generell Dark Theme Styling */
 body {
-    font-family: sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background-color: #282c34; /* Mørk bakgrunn */
+    color: #abb2bf; /* Lys grå tekst */
     line-height: 1.6;
-    margin: 20px;
-    background-color: #f4f4f4;
-    color: #333;
+    margin: 0;
+    padding: 20px;
 }
 
-h1, h2, h3 {
-    color: #0056b3;
+header {
     text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 15px;
+}
+
+h1 {
+    color: #61afef; /* Lys blå for hovedtittel */
+    margin-bottom: 5px;
+}
+
+header p {
+    color: #98c379; /* Grønn for undertittel */
+    font-style: italic;
+}
+
+h2, h3, h4 {
+    color: #e5c07b; /* Gulaktig for seksjonstitler */
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #4b5263; /* Separator */
+    padding-bottom: 5px;
+}
+h4 {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: #c678dd; /* Lilla for panel-titler */
+    border-bottom: none;
+}
+
+main {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px; /* Avstand mellom seksjoner */
+}
+
+.config-section, .game-section {
+    background-color: #3b4048; /* Litt lysere mørk for seksjoner */
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #4b5263; /* Diskret kantlinje */
 }
 
 .hidden {
     display: none !important;
 }
 
-.settings-container, .game-container {
-    background-color: #fff;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.settings-container {
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
+/* Innstillinger & Konfigurasjon */
 .setting {
-    margin-bottom: 15px;
     display: flex;
     align-items: center;
-    gap: 10px; /* Added gap for better spacing */
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
 .setting label {
-    min-width: 150px; /* Ensure labels align */
+    min-width: 100px;
     text-align: right;
-    font-weight: bold;
+    color: #abb2bf;
+    font-size: 0.95em;
 }
 
-.setting select, .setting input[type="number"] {
-    padding: 8px;
-    border: 1px solid #ccc;
+.setting select, .setting input[type="number"], .setting input[type="text"], .setting textarea {
+    flex-grow: 1;
+    padding: 8px 10px;
+    background-color: #21252b; /* Enda mørkere for input */
+    color: #abb2bf;
+    border: 1px solid #4b5263;
     border-radius: 4px;
-    flex-grow: 1; /* Allow input/select to take available space */
+    min-width: 150px;
+    box-sizing: border-box;
+}
+.setting textarea {
+     font-family: monospace;
+     min-height: 150px;
+     resize: vertical;
+     width: 100%; /* Full bredde innenfor flex item */
+     flex-basis: 100%; /* Sørg for at den tar full bredde på linjen */
 }
 
+.setting input[type="number"] {
+     width: 80px; /* Mindre bredde for tall */
+     flex-grow: 0;
+}
+
+.player-setup {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.player-config {
+    flex: 1;
+    min-width: 250px; /* For wrapping */
+    border: 1px solid #4b5263;
+    padding: 15px;
+    border-radius: 6px;
+    background-color: #40454f; /* Litt annen nyanse */
+}
+.player-config h3 {
+     text-align: center;
+     color: #61afef;
+     border-bottom: none;
+     margin-bottom: 15px;
+}
+
+
+.ai-options.hidden {
+    display: none;
+}
+
+.code-help, .custom-strategy-section p small {
+     font-size: 0.85em;
+     color: #98c379;
+     margin-top: -5px;
+     margin-bottom: 10px;
+     display: block;
+     width: 100%;
+     flex-basis: 100%;
+}
+.custom-strategy-section p small {
+     color: #e06c75; /* Rød for advarsel */
+}
+
+/* Knapper */
 button {
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
+    padding: 8px 16px;
+    font-size: 0.95em;
+    background-color: #61afef; /* Lys blå */
+    color: #21252b; /* Mørk tekst på lys knapp */
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    margin: 5px; /* Added margin for spacing */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin: 5px 3px;
 }
 
-button:hover {
-    background-color: #0056b3;
+button:hover:not(:disabled) {
+    background-color: #98c379; /* Grønn hover */
+    transform: translateY(-1px);
 }
 
 button:disabled {
-    background-color: #ccc;
+    background-color: #4b5263;
+    color: #7f848e;
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
-.payoff-matrix {
+.choice-btn.cooperate { background-color: #98c379; color: #282c34;} /* Grønn */
+.choice-btn.cooperate:hover:not(:disabled) { background-color: #b4e490; }
+.choice-btn.defect { background-color: #e06c75; color: #282c34; } /* Rød */
+.choice-btn.defect:hover:not(:disabled) { background-color: #f08a93; }
+
+.choice-btn.selected {
+    box-shadow: 0 0 0 3px #e5c07b; /* Gulaktig kant */
+    transform: scale(1.05);
+}
+
+/* Spillseksjon */
+.game-status {
+    text-align: center;
     margin-bottom: 20px;
-    border: 1px solid #eee;
     padding: 10px;
-    background-color: #e9f5ff;
-    border-radius: 5px;
+    background-color: #40454f;
+    border-radius: 4px;
+    font-size: 1.05em;
 }
+.game-status span { font-weight: bold; color: #e5c07b; }
 
-.payoff-matrix table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: center;
-}
-
-.payoff-matrix th, .payoff-matrix td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-.payoff-matrix th {
-    background-color: #d0eaff;
-}
-
-.status-area {
-    text-align: center;
-    font-size: 1.2em;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-.players-area {
+.player-actions {
     display: flex;
     justify-content: space-around;
+    gap: 20px;
     margin-bottom: 20px;
-    gap: 20px; /* Add gap between player panels */
+    flex-wrap: wrap;
 }
 
-.player-panel {
-    border: 1px solid #ccc;
+.player-action-panel {
+    flex: 1;
+    min-width: 250px;
     padding: 15px;
-    border-radius: 5px;
-    width: 45%; /* Adjust width for better layout */
-    background-color: #f9f9f9;
-    text-align: center; /* Center content */
+    border: 1px solid #4b5263;
+    border-radius: 6px;
+    text-align: center;
 }
 
-.player-panel h2 {
-    margin-top: 0;
-    font-size: 1.3em;
-    color: #555;
+.player-action-panel .human-controls button {
+    min-width: 110px;
 }
 
-.player-panel .controls {
-    margin-top: 10px;
-    margin-bottom: 15px;
-}
-
-.player-panel .strategy-display {
-    font-style: italic;
-    color: #666;
-    margin-bottom: 10px;
-}
-
-
-.choice-btn {
+.action-display {
+    margin-top: 15px;
     font-size: 1.1em;
-    width: 120px; /* Fixed width for buttons */
 }
-
-.choice-btn.cooperate { background-color: #28a745; }
-.choice-btn.cooperate:hover { background-color: #218838; }
-.choice-btn.defect { background-color: #dc3545; }
-.choice-btn.defect:hover { background-color: #c82333; }
-
-.choice-display { font-weight: bold; font-size: 1.2em; }
-.choice-display.cooperate { color: #28a745; }
-.choice-display.defect { color: #dc3545; }
-.choice-display.error { color: orange; font-style: italic; }
-
-.round-score, .total-score {
+.action-display .chosen {
     font-weight: bold;
-    font-size: 1.1em;
+    font-size: 1.2em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    min-width: 30px;
+    display: inline-block;
 }
+.action-display .cooperate { color: #98c379; background-color: rgba(152, 195, 121, 0.1); }
+.action-display .defect { color: #e06c75; background-color: rgba(224, 108, 117, 0.1); }
+.action-display .error { border: 1px dashed #e5c07b; }
 
-.result-area {
-    margin-top: 10px;
-    line-height: 1.4;
-}
 
 .game-controls {
     text-align: center;
+    margin-top: 15px;
     margin-bottom: 20px;
-    border-top: 1px solid #eee;
     padding-top: 15px;
+    border-top: 1px solid #4b5263;
 }
+.game-controls label { margin: 0 5px 0 15px; }
+#play-speed { vertical-align: middle; }
+#speed-value { font-weight: bold; color: #e5c07b; }
 
-.game-controls label {
-    margin-left: 15px;
-}
-
-.history-container {
+/* Historikk Logg */
+.history-log {
     margin-top: 20px;
-    max-height: 300px;
+}
+#history-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
     overflow-y: auto;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    background-color: #21252b;
+    border: 1px solid #4b5263;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 0.9em;
+    font-family: monospace;
+}
+#history-list li {
+    padding: 4px 0;
+    border-bottom: 1px dashed #40454f;
+}
+#history-list li:last-child {
+    border-bottom: none;
+}
+.history-choice-C { color: #98c379; }
+.history-choice-D { color: #e06c75; }
+.history-error-indicator { color: #e5c07b; font-style: italic; margin-left: 5px; }
+
+.game-over-message {
+     text-align: center;
+     font-size: 1.3em;
+     font-weight: bold;
+     color: #98c379;
+     margin-top: 20px;
+     padding: 15px;
+     background-color: #40454f;
+     border-radius: 5px;
 }
 
-#history-table {
+/* Turnering */
+#tournament-agent-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+    margin-bottom: 15px;
+    background-color: #40454f;
+    padding: 15px;
+    border-radius: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+#tournament-agent-list div {
+    display: flex;
+    align-items: center;
+}
+#tournament-agent-list label {
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+#tournament-agent-list input[type="checkbox"] {
+     cursor: pointer;
+     accent-color: #61afef; /* Stil checkbox */
+}
+
+#tournament-status {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #4b5263;
+    border-radius: 4px;
+    color: #e5c07b;
+}
+
+.tournament-results { margin-top: 20px; }
+#tournament-results-table {
     width: 100%;
     border-collapse: collapse;
+    background-color: #3b4048;
 }
-
-#history-table th, #history-table td {
-    border: 1px solid #ddd;
-    padding: 6px 10px;
-    text-align: center;
+#tournament-results-table th, #tournament-results-table td {
+    border: 1px solid #4b5263;
+    padding: 8px 12px;
+    text-align: left;
 }
-
-#history-table th {
-    background-color: #e9ecef;
+#tournament-results-table th {
+    background-color: #4b5263;
+    color: #e5c07b;
     position: sticky;
     top: 0;
-    z-index: 1; /* Ensure header stays above scrolling content */
 }
+#tournament-results-table tbody tr:nth-child(even) { background-color: #40454f; }
+#tournament-results-table tbody tr:hover { background-color: #4f5663; }
+#tournament-results-table td:nth-child(1), #tournament-results-table td:nth-child(3) { text-align: right; font-weight: bold; }
+#tournament-results-table td:nth-child(1) { color: #98c379; width: 50px;}
+#tournament-results-table td:nth-child(3) { color: #61afef; font-family: monospace; }
 
-#history-table tbody tr:nth-child(even) {
-    background-color: #f8f9fa;
-}
-
-.history-cooperate { color: green; font-weight: bold; }
-.history-defect { color: red; font-weight: bold; }
-.history-error { font-style: italic; color: orange; }
-
-.results-summary {
-    margin-top: 25px;
-    padding: 20px;
-    border: 2px solid #007bff;
-    background-color: #e7f3ff;
-    border-radius: 8px;
+/* Footer / Referanse */
+footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
     text-align: center;
 }
-
-.results-summary h2 {
-     margin-top: 0;
+.payoff-matrix-ref {
+    display: inline-block; /* Sentrerer tabellen */
+    border: 1px solid #4b5263;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #3b4048;
 }
+.payoff-matrix-ref h4 { color: #c678dd; border-bottom: none; margin-bottom: 8px; }
+.payoff-matrix-ref table { border-collapse: collapse; margin: 0 auto; font-size: 0.9em; }
+.payoff-matrix-ref th, .payoff-matrix-ref td { border: 1px solid #4b5263; padding: 5px 8px; }
+.payoff-matrix-ref th { background-color: #4b5263; }
