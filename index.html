@@ -9,149 +9,179 @@
 <body>
     <header>
         <h1>Dilemma Lab</h1>
-        <p>Utforsk strategier i Prisoner's Dilemma</p>
+        <p>Utforsk strategier i Iterated Prisoner's Dilemma</p>
     </header>
 
-    <main>
-        <div class="config-section">
-            <h2>Konfigurasjon</h2>
-            <div class="player-setup">
-                <!-- Spiller 1 Konfigurasjon -->
-                <div class="player-config">
-                    <h3>Spiller 1</h3>
-                    <div class="setting">
-                        <label for="p1-type">Type:</label>
-                        <select id="p1-type">
-                            <option value="human">Menneske</option>
-                            <option value="ai">AI</option>
-                        </select>
+    <main class="container">
+        <!-- Venstre Kolonne: Konfigurasjon og Agentbygging -->
+        <div class="column config-column">
+            <section class="config-section card">
+                <h2>Konfigurasjon</h2>
+                <div class="player-setup">
+                    <!-- Spiller 1 -->
+                    <div class="player-config">
+                        <h3>Spiller 1</h3>
+                        <div class="setting">
+                            <label for="p1-type">Type:</label>
+                            <select id="p1-type">
+                                <option value="human">Menneske</option>
+                                <option value="ai" selected>AI</option>
+                            </select>
+                        </div>
+                        <div class="setting ai-options p1">
+                            <label for="p1-strategy">Strategi:</label>
+                            <select id="p1-strategy"><!-- Lastes dynamisk --></select>
+                        </div>
                     </div>
-                    <div class="setting ai-options p1">
-                        <label for="p1-strategy">Strategi:</label>
-                        <select id="p1-strategy">
-                            <!-- Strategier lastes her -->
-                        </select>
+                    <!-- Spiller 2 -->
+                    <div class="player-config">
+                        <h3>Spiller 2</h3>
+                        <div class="setting">
+                            <label for="p2-type">Type:</label>
+                            <select id="p2-type">
+                                <option value="ai" selected>AI</option>
+                                <option value="human">Menneske</option>
+                            </select>
+                        </div>
+                        <div class="setting ai-options p2">
+                            <label for="p2-strategy">Strategi:</label>
+                            <select id="p2-strategy"><!-- Lastes dynamisk --></select>
+                        </div>
                     </div>
                 </div>
-                <!-- Spiller 2 Konfigurasjon -->
-                <div class="player-config">
-                    <h3>Spiller 2</h3>
+                <div class="global-settings">
                     <div class="setting">
-                        <label for="p2-type">Type:</label>
-                        <select id="p2-type">
-                            <option value="ai" selected>AI</option>
-                            <option value="human">Menneske</option>
-                        </select>
+                        <label for="rounds-setting">Maks runder (for auto):</label>
+                        <input type="number" id="rounds-setting" value="200" min="1" max="1000">
                     </div>
-                    <div class="setting ai-options p2">
-                        <label for="p2-strategy">Strategi:</label>
-                        <select id="p2-strategy">
-                            <!-- Strategier lastes her -->
-                        </select>
+                     <div class="setting">
+                        <label for="noise-level-setting">Støy (% feil):</label>
+                        <input type="number" id="noise-level-setting" value="0" min="0" max="50">
                     </div>
                 </div>
-            </div>
-             <div class="global-settings">
-                 <h3>Globale Spillinnstillinger</h3>
-                 <div class="setting">
-                     <label for="rounds-setting">Maks runder (for auto/turnering):</label>
-                     <input type="number" id="rounds-setting" value="100" min="1" max="1000">
-                 </div>
-                <!-- Støy kan legges til her senere om ønskelig -->
-            </div>
-            <button id="reset-game-btn">Nullstill / Start Nytt Spill</button>
-        </div>
+                <button id="reset-game-btn">Nullstill / Start Enkeltspill</button>
+            </section>
 
-        <div class="game-section hidden">
-            <h2>Spill</h2>
-            <div class="game-status">
-                Runde: <span id="round-counter">0</span> |
-                P1 Poeng: <span id="p1-score">0</span> (<span id="p1-avg-score">0.00</span> avg) |
-                P2 Poeng: <span id="p2-score">0</span> (<span id="p2-avg-score">0.00</span> avg)
-            </div>
-            <div class="player-actions">
-                 <!-- Spiller 1 Handlinger -->
-                <div class="player-action-panel p1">
-                    <h4>Spiller 1 (<span class="p1-id">Menneske</span>)</h4>
-                    <p class="p1-strategy-name hidden"></p>
-                    <div class="human-controls p1">
-                         <button class="choice-btn cooperate p1" data-choice="C">Samarbeid</button>
-                         <button class="choice-btn defect p1" data-choice="D">Svik</button>
-                    </div>
-                    <div class="action-display p1">Valg: <span class="chosen">?</span></div>
+            <section class="custom-agent-section card">
+                <h2>Bygg Egen Regelbasert Agent</h2>
+                <div class="setting">
+                    <label for="custom-agent-name">Agentnavn:</label>
+                    <input type="text" id="custom-agent-name" placeholder="f.eks. ForsiktigOptimist">
                 </div>
-                 <!-- Spiller 2 Handlinger -->
-                 <div class="player-action-panel p2">
-                     <h4>Spiller 2 (<span class="p2-id">AI</span>)</h4>
-                     <p class="p2-strategy-name"></p>
-                     <div class="human-controls p2 hidden">
-                          <button class="choice-btn cooperate p2" data-choice="C">Samarbeid</button>
-                          <button class="choice-btn defect p2" data-choice="D">Svik</button>
+                <fieldset>
+                    <legend>Første Trekk:</legend>
+                    <div class="radio-group">
+                        <input type="radio" id="rule-first-c" name="rule-first" value="C" checked>
+                        <label for="rule-first-c">Samarbeid</label>
+                        <input type="radio" id="rule-first-d" name="rule-first" value="D">
+                        <label for="rule-first-d">Svik</label>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Hvis motstander Samarbeidet sist:</legend>
+                     <div class="radio-group">
+                        <input type="radio" id="rule-opp-c-then-c" name="rule-opp-c" value="C" checked>
+                        <label for="rule-opp-c-then-c">Samarbeid</label>
+                        <input type="radio" id="rule-opp-c-then-d" name="rule-opp-c" value="D">
+                        <label for="rule-opp-c-then-d">Svik</label>
                      </div>
-                     <div class="action-display p2">Valg: <span class="chosen">?</span></div>
+                </fieldset>
+                 <fieldset>
+                    <legend>Hvis motstander Sveik sist:</legend>
+                     <div class="radio-group">
+                        <input type="radio" id="rule-opp-d-then-c" name="rule-opp-d" value="C">
+                        <label for="rule-opp-d-then-c">Samarbeid (Tilgi)</label>
+                        <input type="radio" id="rule-opp-d-then-d" name="rule-opp-d" value="D" checked>
+                        <label for="rule-opp-d-then-d">Svik (Straff)</label>
+                    </div>
+                </fieldset>
+                <!-- Flere regler kan legges til her (f.eks. tilgi etter X runder) -->
+                <button id="add-rule-agent-btn">Legg til Regelbasert Agent</button>
+            </section>
+        </div>
+
+        <!-- Høyre Kolonne: Spillvisning og Turnering -->
+        <div class="column game-view-column">
+            <section class="game-section card hidden">
+                <h2>Spill Pågår</h2>
+                <div class="game-status">
+                    Runde: <span id="round-counter">0</span> / <span id="total-rounds-display">200</span> |
+                    Støy: <span id="noise-display">0</span>%
+                </div>
+                 <div class="score-display">
+                     <div>P1 (<span class="p1-id">AI</span>): <span id="p1-score">0</span> (<span id="p1-avg-score">0.00</span> avg)</div>
+                     <div>P2 (<span class="p2-id">AI</span>): <span id="p2-score">0</span> (<span id="p2-avg-score">0.00</span> avg)</div>
                  </div>
-            </div>
-             <div class="game-controls">
-                 <button id="play-step-btn" disabled>Spill 1 Trekk</button>
-                 <button id="play-10-btn" disabled>Spill 10 Trekk</button>
-                 <button id="play-100-btn" disabled>Spill 100 Trekk</button>
-                 <button id="play-all-btn">Spill Resten / Stopp</button>
-                 <label for="play-speed">Hastighet (for auto):</label>
-                 <input type="range" id="play-speed" min="10" max="1000" value="200" step="10">
-                 <span id="speed-value">200</span>ms
-             </div>
-             <div class="history-log">
-                 <h3>Historikk (siste 20 trekk)</h3>
-                 <ul id="history-list"></ul>
-             </div>
-             <div class="game-over-message hidden">
-                 Spillet er ferdig!
-             </div>
-        </div>
+                 <div class="player-actions">
+                     <div class="player-action-panel p1">
+                        <p class="strategy-info"><span class="p1-strategy-name">StrategiNavn</span></p>
+                         <div class="human-controls p1 hidden">
+                             <button class="choice-btn cooperate p1" data-choice="C">Samarbeid</button>
+                             <button class="choice-btn defect p1" data-choice="D">Svik</button>
+                         </div>
+                         <div class="action-display p1">Siste Valg: <span class="chosen">?</span></div>
+                     </div>
+                     <div class="player-action-panel p2">
+                        <p class="strategy-info"><span class="p2-strategy-name">StrategiNavn</span></p>
+                          <div class="human-controls p2 hidden">
+                             <button class="choice-btn cooperate p2" data-choice="C">Samarbeid</button>
+                             <button class="choice-btn defect p2" data-choice="D">Svik</button>
+                         </div>
+                         <div class="action-display p2">Siste Valg: <span class="chosen">?</span></div>
+                     </div>
+                 </div>
+                 <div class="game-controls">
+                     <button id="play-step-btn" title="Spill ett trekk">Steg</button>
+                     <button id="play-10-btn" title="Spill 10 trekk">Spill 10</button>
+                     <button id="play-100-btn" title="Spill 100 trekk">Spill 100</button>
+                     <button id="play-all-btn" title="Spill til slutten eller stopp autospill">Kjør / Stopp</button>
+                     <label for="play-speed">Fart:</label>
+                     <input type="range" id="play-speed" min="10" max="1000" value="200" step="10">
+                     <span id="speed-value">200</span>ms
+                 </div>
+                 <div class="history-log">
+                     <h3>Historikk (siste 15)</h3>
+                     <ul id="history-list"></ul>
+                 </div>
+                 <div class="game-over-message hidden">
+                     Spillet er ferdig! Trykk "Nullstill / Start Nytt Spill".
+                 </div>
+            </section>
 
-        <div class="custom-strategy-section config-section">
-             <h2>Definer Egen Agent</h2>
-             <div class="setting">
-                 <label for="custom-name">Agent Navn:</label>
-                 <input type="text" id="custom-name" placeholder="MinAgentNavn">
-             </div>
-             <div class="setting">
-                  <label for="custom-code">Agent Kode (JS):</label>
-                  <textarea id="custom-code" rows="10" placeholder="function(myHistory, oppHistory) { return 'C'; }"></textarea>
-             </div>
-              <p class="code-help">Funksjonen mottar `myHistory` og `oppHistory`.<br>Hver er en liste av objekter: `{ choice: 'C'/'D', intended: 'C'/'D', errored: boolean }`.<br>Returner 'C' eller 'D'.</small></p>
-              <p><small><b>Advarsel:</b> Kjør kun kode du forstår. Utrygg kode kan være en sikkerhetsrisiko.</small></p>
-             <button id="add-custom-btn">Legg til Agent</button>
-        </div>
+             <section class="tournament-section card">
+                 <h2>Turnering</h2>
+                 <p>Velg agenter som skal delta. Runder/støy fra globale innstillinger.</p>
+                 <div id="tournament-agent-list">
+                     <!-- Agenter lastes her -->
+                 </div>
+                 <button id="start-tournament-btn">Kjør Turnering</button>
+                 <div id="tournament-status" class="hidden"></div>
+                 <div class="tournament-results hidden">
+                     <h3>Resultater (Gj.snitt Poeng per Runde)</h3>
+                     <div class="table-wrapper">
+                        <table id="tournament-results-table">
+                            <thead><tr><th>Rank</th><th>Agent</th><th>Gj.snitt Poeng</th></tr></thead>
+                            <tbody><!-- Resultater lastes her --></tbody>
+                        </table>
+                    </div>
+                 </div>
+             </section>
 
-        <div class="tournament-section config-section">
-            <h2>Turnering</h2>
-            <p>Velg agenter som skal delta (minst 2). Runder/støy fra globale innstillinger.</p>
-            <div id="tournament-agent-list">
-                <!-- Agenter lastes her -->
-            </div>
-            <button id="start-tournament-btn">Kjør Turnering</button>
-            <div id="tournament-status" class="hidden"></div>
-            <div class="tournament-results hidden">
-                <h3>Resultater (Gj.snitt Poeng per Runde)</h3>
-                <table id="tournament-results-table">
-                    <thead><tr><th>Rank</th><th>Agent</th><th>Gj.snitt Poeng</th></tr></thead>
-                    <tbody><!-- Resultater lastes her --></tbody>
-                </table>
-            </div>
         </div>
-
     </main>
 
     <footer>
         <div class="payoff-matrix-ref">
             <h4>Referanse: Poengmatrise</h4>
             <table>
-                <tr><th></th><th>P2 C</th><th>P2 D</th></tr>
-                <tr><th>P1 C</th><td>P1: 3, P2: 3</td><td>P1: 0, P2: 5</td></tr>
-                <tr><th>P1 D</th><td>P1: 5, P2: 0</td><td>P1: 1, P2: 1</td></tr>
+                 <thead><tr><th></th><th>P2 C</th><th>P2 D</th></tr></thead>
+                 <tbody>
+                    <tr><th>P1 C</th><td>P1: 3, P2: 3</td><td>P1: 0, P2: 5</td></tr>
+                    <tr><th>P1 D</th><td>P1: 5, P2: 0</td><td>P1: 1, P2: 1</td></tr>
+                </tbody>
             </table>
         </div>
+        <p><small>Inspirert av Veritasium og Robert Axelrods arbeid.</small></p>
     </footer>
 
     <script src="script.js"></script>
