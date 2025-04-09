@@ -1,188 +1,250 @@
-/* Generell Dark Theme Styling */
+/* --- Generell Dark Theme --- */
+:root {
+    --bg-dark: #282c34;
+    --bg-medium: #3b4048;
+    --bg-light: #4b5263;
+    --text-primary: #abb2bf;
+    --text-secondary: #8a91a0;
+    --accent-blue: #61afef;
+    --accent-green: #98c379;
+    --accent-yellow: #e5c07b;
+    --accent-red: #e06c75;
+    --accent-purple: #c678dd;
+    --border-color: #4b5263;
+}
+
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    background-color: #282c34; /* Mørk bakgrunn */
-    color: #abb2bf; /* Lys grå tekst */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
     line-height: 1.6;
     margin: 0;
-    padding: 20px;
+    padding: 15px;
 }
 
 header {
     text-align: center;
     margin-bottom: 30px;
-    border-bottom: 1px solid #444;
     padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 h1 {
-    color: #61afef; /* Lys blå for hovedtittel */
+    color: var(--accent-blue);
     margin-bottom: 5px;
+    font-size: 2.2em;
 }
 
 header p {
-    color: #98c379; /* Grønn for undertittel */
+    color: var(--accent-green);
     font-style: italic;
+    font-size: 1.1em;
 }
 
-h2, h3, h4 {
-    color: #e5c07b; /* Gulaktig for seksjonstitler */
+h2, h3, h4, fieldset legend {
+    color: var(--accent-yellow);
     margin-top: 0;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #4b5263; /* Separator */
     padding-bottom: 5px;
+}
+
+h2 {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    font-size: 1.6em;
+}
+h3 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+     color: var(--accent-purple);
 }
 h4 {
     font-size: 1.1em;
     margin-bottom: 10px;
-    color: #c678dd; /* Lilla for panel-titler */
-    border-bottom: none;
+    color: var(--text-primary);
+}
+fieldset legend {
+     font-weight: bold;
+     color: var(--accent-blue);
+     padding: 0 5px;
+     font-size: 1em;
 }
 
-main {
-    max-width: 1000px;
-    margin: 0 auto;
+
+/* --- Layout --- */
+.container {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.column {
     display: flex;
     flex-direction: column;
-    gap: 30px; /* Avstand mellom seksjoner */
+    gap: 25px;
 }
 
-.config-section, .game-section {
-    background-color: #3b4048; /* Litt lysere mørk for seksjoner */
+.config-column {
+    flex: 1;
+    min-width: 350px; /* Minimum width before wrapping */
+}
+
+.game-view-column {
+    flex: 2; /* Game view takes more space */
+    min-width: 450px;
+}
+
+.card {
+    background-color: var(--bg-medium);
     padding: 20px;
     border-radius: 8px;
-    border: 1px solid #4b5263; /* Diskret kantlinje */
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 
 .hidden {
     display: none !important;
 }
 
-/* Innstillinger & Konfigurasjon */
+/* --- Innstillinger --- */
 .setting {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 12px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Allow label and input to wrap */
 }
 
 .setting label {
-    min-width: 100px;
+    min-width: 90px; /* Reduced width */
     text-align: right;
-    color: #abb2bf;
-    font-size: 0.95em;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    flex-shrink: 0; /* Prevent label shrinking */
 }
 
 .setting select, .setting input[type="number"], .setting input[type="text"], .setting textarea {
     flex-grow: 1;
     padding: 8px 10px;
-    background-color: #21252b; /* Enda mørkere for input */
-    color: #abb2bf;
-    border: 1px solid #4b5263;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    min-width: 150px;
+    min-width: 100px;
     box-sizing: border-box;
 }
-.setting textarea {
-     font-family: monospace;
-     min-height: 150px;
-     resize: vertical;
-     width: 100%; /* Full bredde innenfor flex item */
-     flex-basis: 100%; /* Sørg for at den tar full bredde på linjen */
-}
-
-.setting input[type="number"] {
-     width: 80px; /* Mindre bredde for tall */
-     flex-grow: 0;
-}
+.setting input[type="number"] { width: 70px; flex-grow: 0; }
+.setting select { min-width: 150px; }
 
 .player-setup {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
+    display: grid; /* Use grid for player config */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .player-config {
-    flex: 1;
-    min-width: 250px; /* For wrapping */
-    border: 1px solid #4b5263;
+    border: 1px solid var(--bg-light);
     padding: 15px;
     border-radius: 6px;
-    background-color: #40454f; /* Litt annen nyanse */
+    background-color: var(--bg-light);
 }
-.player-config h3 {
-     text-align: center;
-     color: #61afef;
-     border-bottom: none;
-     margin-bottom: 15px;
+.player-config h3 { text-align: center; color: var(--accent-blue); border: none; margin-bottom: 10px;}
+
+.global-settings {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--border-color);
 }
 
+.ai-options.hidden { display: none; }
 
-.ai-options.hidden {
-    display: none;
-}
-
-.code-help, .custom-strategy-section p small {
-     font-size: 0.85em;
-     color: #98c379;
-     margin-top: -5px;
-     margin-bottom: 10px;
-     display: block;
-     width: 100%;
-     flex-basis: 100%;
-}
-.custom-strategy-section p small {
-     color: #e06c75; /* Rød for advarsel */
-}
-
-/* Knapper */
-button {
-    padding: 8px 16px;
-    font-size: 0.95em;
-    background-color: #61afef; /* Lys blå */
-    color: #21252b; /* Mørk tekst på lys knapp */
-    border: none;
+/* --- Agent Builder --- */
+.custom-agent-section fieldset {
+    border: 1px solid var(--bg-light);
     border-radius: 4px;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+}
+.radio-group label {
+    min-width: auto; /* Override default */
+    text-align: left;
+    margin-right: 15px; /* Space between radio options */
+    font-size: 0.9em;
+    cursor: pointer;
+}
+.radio-group input[type="radio"] {
+    margin-right: 5px;
+    cursor: pointer;
+    accent-color: var(--accent-green);
+}
+.code-help, .custom-agent-section p small {
+     font-size: 0.85em;
+     color: var(--text-secondary);
+     margin-top: 0;
+     margin-bottom: 10px;
+     line-height: 1.4;
+}
+.custom-agent-section p small { color: var(--accent-red); font-weight: bold; }
+
+/* --- Knapper --- */
+button {
+    padding: 9px 18px;
+    font-size: 1em;
+    background-color: var(--accent-blue);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
     margin: 5px 3px;
+    font-weight: 500;
 }
 
 button:hover:not(:disabled) {
-    background-color: #98c379; /* Grønn hover */
+    background-color: var(--accent-green);
     transform: translateY(-1px);
 }
 
 button:disabled {
-    background-color: #4b5263;
-    color: #7f848e;
+    background-color: var(--bg-light);
+    color: var(--text-secondary);
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
-.choice-btn.cooperate { background-color: #98c379; color: #282c34;} /* Grønn */
+.choice-btn.cooperate { background-color: var(--accent-green); color: var(--bg-dark);}
 .choice-btn.cooperate:hover:not(:disabled) { background-color: #b4e490; }
-.choice-btn.defect { background-color: #e06c75; color: #282c34; } /* Rød */
+.choice-btn.defect { background-color: var(--accent-red); color: var(--bg-dark); }
 .choice-btn.defect:hover:not(:disabled) { background-color: #f08a93; }
 
 .choice-btn.selected {
-    box-shadow: 0 0 0 3px #e5c07b; /* Gulaktig kant */
-    transform: scale(1.05);
+    box-shadow: 0 0 0 3px var(--accent-yellow);
+    transform: scale(1.03);
 }
 
-/* Spillseksjon */
+/* --- Spillvisning --- */
 .game-status {
     text-align: center;
     margin-bottom: 20px;
     padding: 10px;
-    background-color: #40454f;
+    background-color: var(--bg-light);
     border-radius: 4px;
-    font-size: 1.05em;
+    font-size: 1em;
+    display: flex; /* Flex for better alignment */
+    justify-content: space-around;
+    flex-wrap: wrap;
 }
-.game-status span { font-weight: bold; color: #e5c07b; }
+.game-status span { font-weight: bold; color: var(--accent-yellow); margin: 0 5px;}
+
+.score-display {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+.score-display span { font-weight: bold; color: var(--accent-blue); }
+.score-display span[id$="-avg-score"] { color: var(--accent-green); font-size: 0.9em; }
+
 
 .player-actions {
     display: flex;
@@ -194,32 +256,30 @@ button:disabled {
 
 .player-action-panel {
     flex: 1;
-    min-width: 250px;
+    min-width: 280px; /* Mer plass per panel */
     padding: 15px;
-    border: 1px solid #4b5263;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     text-align: center;
+    background-color: var(--bg-light);
 }
+.player-action-panel .strategy-info { font-style: italic; color: var(--text-secondary); margin: 0 0 10px 0; min-height: 1.2em; }
+.player-action-panel .human-controls { margin-bottom: 10px; }
+.player-action-panel .human-controls.hidden { display: none; }
 
-.player-action-panel .human-controls button {
-    min-width: 110px;
-}
-
-.action-display {
-    margin-top: 15px;
-    font-size: 1.1em;
-}
+.action-display { margin-top: 10px; font-size: 1.1em; }
 .action-display .chosen {
     font-weight: bold;
     font-size: 1.2em;
     padding: 3px 8px;
     border-radius: 3px;
-    min-width: 30px;
     display: inline-block;
+    min-width: 25px;
+    background-color: var(--bg-dark);
 }
-.action-display .cooperate { color: #98c379; background-color: rgba(152, 195, 121, 0.1); }
-.action-display .defect { color: #e06c75; background-color: rgba(224, 108, 117, 0.1); }
-.action-display .error { border: 1px dashed #e5c07b; }
+.action-display .cooperate { color: var(--accent-green); }
+.action-display .defect { color: var(--accent-red); }
+.action-display .error { border: 1px dashed var(--accent-yellow); font-size: 0.9em; font-style: italic; padding: 1px 4px;}
 
 
 .game-controls {
@@ -227,124 +287,129 @@ button:disabled {
     margin-top: 15px;
     margin-bottom: 20px;
     padding-top: 15px;
-    border-top: 1px solid #4b5263;
+    border-top: 1px solid var(--border-color);
 }
 .game-controls label { margin: 0 5px 0 15px; }
-#play-speed { vertical-align: middle; }
-#speed-value { font-weight: bold; color: #e5c07b; }
+#play-speed { vertical-align: middle; accent-color: var(--accent-blue); }
+#speed-value { font-weight: bold; color: var(--accent-yellow); }
 
-/* Historikk Logg */
-.history-log {
-    margin-top: 20px;
-}
+/* --- Historikk Logg --- */
+.history-log h3 { margin-bottom: 8px; font-size: 1.1em; }
 #history-list {
     list-style-type: none;
-    padding: 0;
+    padding: 10px 15px; /* Mer padding */
     margin: 0;
-    max-height: 200px;
+    max-height: 250px; /* Justert høyde */
     overflow-y: auto;
-    background-color: #21252b;
-    border: 1px solid #4b5263;
+    background-color: var(--bg-dark); /* Mørkeste for logg */
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 10px;
     font-size: 0.9em;
     font-family: monospace;
 }
 #history-list li {
-    padding: 4px 0;
-    border-bottom: 1px dashed #40454f;
+    padding: 5px 0; /* Litt mer luft */
+    border-bottom: 1px dotted var(--bg-light); /* Prikket linje */
+    display: flex; /* Bruk flex for bedre justering */
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 5px;
 }
-#history-list li:last-child {
-    border-bottom: none;
-}
-.history-choice-C { color: #98c379; }
-.history-choice-D { color: #e06c75; }
-.history-error-indicator { color: #e5c07b; font-style: italic; margin-left: 5px; }
+#history-list li:last-child { border-bottom: none; }
+.history-round { font-weight: bold; color: var(--text-secondary); min-width: 40px;}
+.history-p1, .history-p2 { min-width: 150px; /* Plass til valg + poeng */ }
+.history-p1 span, .history-p2 span { display: inline-block; min-width: 20px; text-align: center; } /* For C/D */
+.history-choice-C { color: var(--accent-green); font-weight: bold;}
+.history-choice-D { color: var(--accent-red); font-weight: bold;}
+.history-score { color: var(--accent-blue); font-weight: bold; margin-left: 5px;}
+.history-error-indicator { color: var(--accent-yellow); font-style: italic; font-size: 0.9em; margin-left: 3px; }
+
 
 .game-over-message {
      text-align: center;
      font-size: 1.3em;
      font-weight: bold;
-     color: #98c379;
+     color: var(--accent-green);
      margin-top: 20px;
      padding: 15px;
-     background-color: #40454f;
+     background-color: var(--bg-light);
      border-radius: 5px;
 }
 
-/* Turnering */
+/* --- Turnering --- */
 #tournament-agent-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 8px;
     margin-bottom: 15px;
-    background-color: #40454f;
+    background-color: var(--bg-light);
     padding: 15px;
     border-radius: 4px;
-    max-height: 250px;
+    max-height: 300px;
     overflow-y: auto;
 }
-#tournament-agent-list div {
-    display: flex;
-    align-items: center;
-}
-#tournament-agent-list label {
-    margin-left: 8px;
-    cursor: pointer;
-    font-size: 0.95em;
-}
-#tournament-agent-list input[type="checkbox"] {
-     cursor: pointer;
-     accent-color: #61afef; /* Stil checkbox */
-}
+#tournament-agent-list div { display: flex; align-items: center; }
+#tournament-agent-list label { margin-left: 8px; cursor: pointer; font-size: 0.95em; }
+#tournament-agent-list input[type="checkbox"] { cursor: pointer; accent-color: var(--accent-blue); }
 
 #tournament-status {
     text-align: center;
     margin: 15px 0;
     padding: 10px;
-    background-color: #4b5263;
+    background-color: var(--bg-light);
     border-radius: 4px;
-    color: #e5c07b;
+    color: var(--accent-yellow);
 }
 
-.tournament-results { margin-top: 20px; }
+.tournament-results h3 { margin-bottom: 10px; }
+.table-wrapper { /* For å få sticky header til å fungere med max-height */
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+}
 #tournament-results-table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #3b4048;
+    background-color: var(--bg-medium);
 }
 #tournament-results-table th, #tournament-results-table td {
-    border: 1px solid #4b5263;
-    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    padding: 9px 12px; /* Litt mer padding */
     text-align: left;
 }
 #tournament-results-table th {
-    background-color: #4b5263;
-    color: #e5c07b;
+    background-color: var(--bg-light);
+    color: var(--accent-yellow);
     position: sticky;
     top: 0;
+    z-index: 1; /* Sørg for at header er over innhold */
 }
-#tournament-results-table tbody tr:nth-child(even) { background-color: #40454f; }
+#tournament-results-table tbody tr:nth-child(even) { background-color: var(--bg-medium); }
 #tournament-results-table tbody tr:hover { background-color: #4f5663; }
 #tournament-results-table td:nth-child(1), #tournament-results-table td:nth-child(3) { text-align: right; font-weight: bold; }
-#tournament-results-table td:nth-child(1) { color: #98c379; width: 50px;}
-#tournament-results-table td:nth-child(3) { color: #61afef; font-family: monospace; }
+#tournament-results-table td:nth-child(1) { color: var(--accent-green); width: 50px;}
+#tournament-results-table td:nth-child(3) { color: var(--accent-blue); font-family: monospace; }
 
-/* Footer / Referanse */
+/* --- Footer / Referanse --- */
 footer {
     margin-top: 40px;
     padding-top: 20px;
-    border-top: 1px solid #444;
+    border-top: 1px solid var(--border-color);
     text-align: center;
+    font-size: 0.9em;
+    color: var(--text-secondary);
 }
 .payoff-matrix-ref {
-    display: inline-block; /* Sentrerer tabellen */
-    border: 1px solid #4b5263;
-    padding: 10px;
+    display: inline-block;
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
     border-radius: 5px;
-    background-color: #3b4048;
+    background-color: var(--bg-medium);
+    margin-bottom: 10px;
 }
-.payoff-matrix-ref h4 { color: #c678dd; border-bottom: none; margin-bottom: 8px; }
+.payoff-matrix-ref h4 { color: var(--accent-purple); border: none; margin-bottom: 8px; font-size: 1em;}
 .payoff-matrix-ref table { border-collapse: collapse; margin: 0 auto; font-size: 0.9em; }
-.payoff-matrix-ref th, .payoff-matrix-ref td { border: 1px solid #4b5263; padding: 5px 8px; }
-.payoff-matrix-ref th { background-color: #4b5263; }
+.payoff-matrix-ref th, .payoff-matrix-ref td { border: 1px solid var(--border-color); padding: 5px 8px; }
+.payoff-matrix-ref thead th { background-color: var(--bg-light); }
+.payoff-matrix-ref tbody th { background-color: var(--bg-light); text-align: left; }
